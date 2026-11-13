@@ -1,0 +1,142 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated()
+        && request.auth.uid == userId;
+    }
+
+    function validCustomerProfile(userId) {
+      return request.resource.data.keys().hasAll(['uid', 'email', 'role', 'createdAt'])
+      && request.resource.data.keys().hasOnly(['uid', 'email', 'role', 'displayName', 'photoUrl', 'phoneNumber', 'createdAt', 'updatedAt'])
+      && request.resource.data.uid == userId
+      && request.resource.data.role == 'CUSTOMER'
+      && request.resource.data.email == request.auth.token.email
+      && request.resource.data.createdAt == request.time;
+    }
+
+    // User Profiles
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && validCustomerProfile(userId);
+      allow update: if isOwner(userId)
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['displayName', 'photoUrl', 'phoneNumber', 'updatedAt'])
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+
+      // Storage Boxes - QR Codes, Unique Box IDs, Status, and Verification are 100% BACKEND-CONTROLLED
+      match /boxes/{boxId} {
+        allow read: if isOwner(userId);
+
+        allow create: if isOwner(userId)
+          && request.resource.data.title is string
+          && request.resource.data.title.size() > 0
+          && request.resource.data.title.size() <= 100
+          && request.resource.data.keys().hasAll(['title', 'category'])
+          && request.resource.data.keys().hasOnly(['id', 'category', 'title', 'description', 'storageDate', 'photoUrl', 'createdAt'])
+          && !('isVerified' in request.resource.data)
+          && !('qrCode' in request.resource.data)
+          && !('uniqueBoxId' in request.resource.data)
+          && !('status' in request.resource.data);
+
+        allow update: if isOwner(userId)
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['title', 'description', 'category', 'photoUrl', 'updatedAt']);
+
+        allow delete: if false;
+
+        match /items/{itemId} {
+          allow read: if isOwner(userId);
+
+          allow create: if isOwner(userId)
+            && request.resource.data.name is string
+            && request.resource.data.name.size() > 0
+            && request.resource.data.name.size() <= 100
+            && request.resource.data.keys().hasAll(['name', 'category'])
+            && request.resource.data.keys().hasOnly(['id', 'boxId', 'name', 'category', 'description', 'photoUrl', 'createdAt']);
+
+          allow update: if isOwner(userId)
+            && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['name', 'category', 'description', 'photoUrl', 'updatedAt']);
+
+          allow delete: if false;
+        }
+      }
+    }
+
+    // Marketplace Listings - Price in Integer Paise (> 0)
+    match /marketplace_listings/{listingId} {
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.dailyPricePaise is int
+        && request.resource.data.dailyPricePaise > 0
+        && !('isVerified' in request.resource.data) // Backend only
+        && !('status' in request.resource.data)     // Backend only
+        && request.resource.data.keys().hasAll(['title', 'category', 'dailyPricePaise', 'ownerId'])
+        && request.resource.data.keys().hasOnly(['id', 'ownerId', 'ownerName', 'title', 'description', 'category', 'dailyPricePaise', 'weeklyPricePaise', 'securityDepositPaise', 'availableStart', 'availableEnd', 'condition', 'photoUrl', 'isAvailable', 'createdAt']);
+
+      allow update: if isAuthenticated()
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.ownerId == resource.data.ownerId // ownerId Immutable
+        && request.resource.data.dailyPricePaise is int
+        && request.resource.data.dailyPricePaise > 0
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['title', 'description', 'category', 'dailyPricePaise', 'weeklyPricePaise', 'securityDepositPaise', 'availableStart', 'availableEnd', 'condition', 'photoUrl', 'isAvailable', 'updatedAt']);
+
+      allow delete: if false;
+    }
+
+    // Rental Bookings - Strictly Backend-Controlled
+    match /rental_bookings/{bookingId} {
+      allow read: if isAuthenticated()
+        && (
+          resource.data.renterId == request.auth.uid ||
+          resource.data.ownerId == request.auth.uid
+        );
+
+      allow create, update, delete: if false;
+    }
+
+    // Financial Ledgers & Payments - Backend-Controlled Writes
+    match /payments/{paymentId} {
+      allow read: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+
+      allow create, update, delete: if false;
+    }
+
+    match /payouts/{payoutId} {
+      allow read: if isAuthenticated()
+        && resource.data.ownerId == request.auth.uid;
+
+      allow create, update, delete: if false;
+    }
+
+    match /financial_ledger/{entryId} {
+      allow read: if isAuthenticated()
+        && (
+          (resource.data.userId != null && resource.data.userId == request.auth.uid) ||
+          (resource.data.ownerId != null && resource.data.ownerId == request.auth.uid)
+        );
+
+      allow create, update, delete: if false;
+    }
+
+    // Webhook Event Records - Internal Backend Access Only
+    match /processed_webhook_events/{eventId} {
+      allow read, write: if false;
+    }
+
+    match /unmonitored_webhook_events/{eventId} {
+      allow read, write: if false;
+    }
+  }
+}

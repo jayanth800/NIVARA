@@ -1,0 +1,51 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Android Studio and local files
+.idea/
+.artifacts/
+.gradle/
+**/build/
+local.properties
+
+# Signing keys and certificates
+*.jks
+*.keystore
+*.pem
+*.p12
+
+# Environment and Firebase local configuration
+.env
+.env.*
+functions/.runtimeconfig.json
+
+# Logs
+*.log
+firebase-debug.log
+
+# Empty nested Git repository
+/NIVARA/
+
+# Crash reports
+/nivara-crash.txt
+
+# Node.js dependencies and generated Firebase Functions output
+**/node_modules/
+functions/lib/
+
+# Firebase service account credentials
+*serviceAccount*.json
+*service-account*.json

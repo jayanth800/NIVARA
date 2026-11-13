@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "705432900473",
+    "project_id": "com-example-nivara-2b61e",
+    "storage_bucket": "com-example-nivara-2b61e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:705432900473:android:49c5a9c68d303f2b2a95a8",
+        "android_client_info": {
+          "package_name": "com.example.nivara"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD55IXmg0LTT14WbJEVstwMqVhu1IBBCGs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:705432900473:android:2c82918fd89c590a2a95a8",
+        "android_client_info": {
+          "package_name": "com.nivara.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD55IXmg0LTT14WbJEVstwMqVhu1IBBCGs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
